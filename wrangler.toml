@@ -4,25 +4,18 @@ compatibility_date = "2024-06-27"
 workers_dev = true
 compatibility_flags = ["nodejs_compat"]
 
+[env.production]
+name = "dealsjunction-prod"  # Unique name for production deployment
+
 [dev]
 port = 8787
 # You can also load local environment vars from .dev.vars if needed
 
 [vars]  # 👈 Default environment (used for `wrangler dev`)
-TWITTER_API_KEY = "your_dev_key"
-TWITTER_API_SECRET = "your_dev_secret"
-TWITTER_ACCESS_TOKEN = "your_dev_token"
-TWITTER_ACCESS_SECRET = "your_dev_access_secret"
-USER_ID = "your_dev_user_id"
-USER_AGENT = "your_dev_user_agent"
-
-[env.production]
-name = "dealsjunction-prod"  # Unique name for production deployment
-
-[env.production.vars]  # 👈 Vars used ONLY during `wrangler deploy --env production`
 TWITTER_API_KEY="pQT4kqadVG8ZFBlxOIIvqsdoJ"
 TWITTER_API_SECRET="ioSUXC00RE9EvYxYj0ZbzM0hl666MbL6abW0Yqbw3wZwZ8vQ3b"
 TWITTER_ACCESS_TOKEN="1938682277459877891-LHWLnOS7PZtPZwemR2Wjbvp2yzGIkC"
 TWITTER_ACCESS_SECRET="nm5zGCRuhO6ik00jJWHX2nvOlg6W5m4pQBF7smNcAmmHu"
 USER_ID="101010"
 USER_AGENT="Mozilla/5.0 (Macintosh; Intel Mac OS X 13_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36"
+
