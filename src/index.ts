@@ -69,6 +69,7 @@ async function signedPost(env: any, url: string, body: any) {
 }
 
 app.get('/healthcheck', (c) => {
+    console.log("Req came at healthcheck: ", c.env.TWITTER_ACCESS_SECRET);
     return c.json({ success: true, user_id: c.env.USER_ID })
 })
 
@@ -107,6 +108,7 @@ app.post('/autotweet/tweet', async (c) => {
     try {
         const tweetRes = await signedPost(env, TWITTER_BASE_URL + '/tweets', tweetBody)
         const tweetJson = await tweetRes.json()
+        console.log(tweetJson);
         return c.json({ success: true, id: tweetJson.data.id })
     } catch (err: any) {
         console.log("Errro at /tweet due to: " + err);
