@@ -1,10 +1,19 @@
-name = "twitter-worker"
-compatibility_date = "2025-06-26"
+name = "offerbox"  # Unique name for development environment
 main = "src/index.ts"
+compatibility_date = "2024-06-27"
+workers_dev = true
+compatibility_flags = ["nodejs_compat"]
 
-[vars]
-TWITTER_API_KEY = "..."
-TWITTER_API_SECRET = "..."
-TWITTER_ACCESS_TOKEN = "..."
-TWITTER_ACCESS_SECRET = "..."
-USER_ID = "12344444"
+[env.production]
+name = "offerbox-prod"  # Unique name for production deployment
+
+[dev]
+port = 8787
+
+[vars]  # 👈 Default environment (used for `wrangler dev`)
+TWITTER_API_KEY="LtuIW55nGD8NeTskpCoOMIYts"
+TWITTER_API_SECRET="nishnihk1fw5CXTLHstsAdiVULC7jYhB01kFudG2SbhqjBfzyy"
+TWITTER_ACCESS_TOKEN="1938857948270469123-H63iRzMEVOKa4Ke2Wo5qNlVB8RCODQ"
+TWITTER_ACCESS_SECRET="9uAvSBG9FNl1EHip64O7aO9ypWmvqvk3QlM3pS4r1z8jb"
+USER_ID="1938857948270469123"
+USER_AGENT="Mozilla/5.0 (Macintosh; Intel Mac OS X 13_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36"

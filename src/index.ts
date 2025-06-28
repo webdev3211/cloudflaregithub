@@ -56,18 +56,24 @@ async function getOAuthHeader(env: any, url: string, method = 'POST') {
 }
 
 async function signedPost(env: any, url: string, body: any) {
+    console.log("env.USER_AGENT: ", env.USER_AGENT);
     const headers = {
         Authorization: await getOAuthHeader(env, url),
         'Content-Type': 'application/json',
+        'User-Agent': "Mozilla/5.0 (Macintosh; Intel Mac OS X 13_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36"
     }
-    return await fetch(url, {
+    const resp = await fetch(url, {
         method: 'POST',
         headers,
         body: JSON.stringify(body),
-    })
+    });
+    console.log("TWITTER RESP: ");
+    console.log(resp);
+    return resp;
 }
 
 app.get('/healthcheck', (c) => {
+    console.log("Req came at healthcheck: ", c.env.TWITTER_ACCESS_SECRET);
     return c.json({ success: true, user_id: c.env.USER_ID })
 })
 
@@ -106,8 +112,10 @@ app.post('/autotweet/tweet', async (c) => {
     try {
         const tweetRes = await signedPost(env, TWITTER_BASE_URL + '/tweets', tweetBody)
         const tweetJson = await tweetRes.json()
+        console.log(tweetJson);
         return c.json({ success: true, id: tweetJson.data.id })
     } catch (err: any) {
+        console.log("Errro at /tweet due to: " + err);
         return c.json({ success: false, message: err.message }, 500)
     }
 })
@@ -120,6 +128,7 @@ app.post('/autotweet/retweet', async (c) => {
         if (!res.ok) throw new Error(await res.text())
         return c.json({ success: true, message: 'Retweet done success' })
     } catch (err: any) {
+        console.log("Errro at /retweet due to: " + err);
         return c.json({ success: false, message: err.message }, 500)
     }
 })
@@ -132,6 +141,7 @@ app.post('/autotweet/like', async (c) => {
         if (!res.ok) throw new Error(await res.text())
         return c.json({ success: true, message: 'Like done success' })
     } catch (err: any) {
+        console.log("Errro at /like due to: " + err);
         return c.json({ success: false, message: err.message }, 500)
     }
 })
@@ -145,8 +155,10 @@ app.post('/autotweet/comment', async (c) => {
             reply: { in_reply_to_tweet_id: tweet_id },
         })
         const data = await res.json()
+        console.log(data);
         return c.json({ success: true, id: data.data.id, message: 'Reply done success' })
     } catch (err: any) {
+        console.log("Errro at /comment due to: " + err);
         return c.json({ success: false, message: err.message }, 500)
     }
 })
@@ -162,6 +174,7 @@ app.post('/autotweet/quote', async (c) => {
         const data = await res.json()
         return c.json({ success: true, id: data.data.id, message: 'Quote done success' })
     } catch (err: any) {
+        console.log("Errro at /quote due to: " + err);
         return c.json({ success: false, message: err.message }, 500)
     }
 })
