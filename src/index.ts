@@ -59,6 +59,7 @@ async function signedPost(env: any, url: string, body: any) {
     const headers = {
         Authorization: await getOAuthHeader(env, url),
         'Content-Type': 'application/json',
+        'User-Agent': env.USER_AGENT
     }
     return await fetch(url, {
         method: 'POST',
@@ -108,6 +109,7 @@ app.post('/autotweet/tweet', async (c) => {
         const tweetJson = await tweetRes.json()
         return c.json({ success: true, id: tweetJson.data.id })
     } catch (err: any) {
+        console.log("Errro at /tweet due to: " + err);
         return c.json({ success: false, message: err.message }, 500)
     }
 })
@@ -120,6 +122,7 @@ app.post('/autotweet/retweet', async (c) => {
         if (!res.ok) throw new Error(await res.text())
         return c.json({ success: true, message: 'Retweet done success' })
     } catch (err: any) {
+        console.log("Errro at /retweet due to: " + err);
         return c.json({ success: false, message: err.message }, 500)
     }
 })
@@ -132,6 +135,7 @@ app.post('/autotweet/like', async (c) => {
         if (!res.ok) throw new Error(await res.text())
         return c.json({ success: true, message: 'Like done success' })
     } catch (err: any) {
+        console.log("Errro at /like due to: " + err);
         return c.json({ success: false, message: err.message }, 500)
     }
 })
@@ -147,6 +151,7 @@ app.post('/autotweet/comment', async (c) => {
         const data = await res.json()
         return c.json({ success: true, id: data.data.id, message: 'Reply done success' })
     } catch (err: any) {
+        console.log("Errro at /comment due to: " + err);
         return c.json({ success: false, message: err.message }, 500)
     }
 })
@@ -162,6 +167,7 @@ app.post('/autotweet/quote', async (c) => {
         const data = await res.json()
         return c.json({ success: true, id: data.data.id, message: 'Quote done success' })
     } catch (err: any) {
+        console.log("Errro at /quote due to: " + err);
         return c.json({ success: false, message: err.message }, 500)
     }
 })
