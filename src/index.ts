@@ -56,16 +56,19 @@ async function getOAuthHeader(env: any, url: string, method = 'POST') {
 }
 
 async function signedPost(env: any, url: string, body: any) {
+    console.log("env.USER_AGENT: ", env.USER_AGENT);
     const headers = {
         Authorization: await getOAuthHeader(env, url),
         'Content-Type': 'application/json',
-        'User-Agent': env.USER_AGENT
+        'User-Agent': "Mozilla/5.0 (Macintosh; Intel Mac OS X 13_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36"
     }
-    return await fetch(url, {
+    const resp = await fetch(url, {
         method: 'POST',
         headers,
         body: JSON.stringify(body),
-    })
+    });
+    console.log("TWITTER RESP: ", resp);
+    return resp;
 }
 
 app.get('/healthcheck', (c) => {

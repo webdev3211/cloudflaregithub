@@ -9,13 +9,12 @@ name = "dealsjunction-prod"  # Unique name for production deployment
 
 [dev]
 port = 8787
-# You can also load local environment vars from .dev.vars if needed
 
 [vars]  # 👈 Default environment (used for `wrangler dev`)
 TWITTER_API_KEY="pQT4kqadVG8ZFBlxOIIvqsdoJ"
 TWITTER_API_SECRET="ioSUXC00RE9EvYxYj0ZbzM0hl666MbL6abW0Yqbw3wZwZ8vQ3b"
 TWITTER_ACCESS_TOKEN="1938682277459877891-LHWLnOS7PZtPZwemR2Wjbvp2yzGIkC"
 TWITTER_ACCESS_SECRET="nm5zGCRuhO6ik00jJWHX2nvOlg6W5m4pQBF7smNcAmmHu"
-USER_ID="101010"
-USER_AGENT="Mozilla/5.0 (Macintosh; Intel Mac OS X 13_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36"
+USER_ID="1938682277459877891"
+USER_AGENT="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36"
 
