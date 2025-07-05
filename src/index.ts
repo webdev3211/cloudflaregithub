@@ -1,182 +1,293 @@
+// // index.ts
+// import { Hono } from 'hono'
+// import { FormData, File } from 'formdata-node'
+// import { fileFromPath } from 'formdata-node/file-from-path'
+
+// const app = new Hono()
+
+// const TWITTER_BASE_URL = 'https://api.twitter.com/2'
+
+// function getOAuthBaseString(oauth: Record<string, string>, url: string, method: string): string {
+//     const paramString = Object.keys(oauth)
+//         .sort()
+//         .map((key) => `${encodeURIComponent(key)}=${encodeURIComponent(oauth[key])}`)
+//         .join('&')
+
+//     return `${method}&${encodeURIComponent(url)}&${encodeURIComponent(paramString)}`
+// }
+
+// async function getOAuthHeader(env: any, url: string, method = 'POST') {
+//     const oauth: Record<string, string> = {
+//         oauth_consumer_key: env.TWITTER_API_KEY,
+//         oauth_token: env.TWITTER_ACCESS_TOKEN,
+//         oauth_nonce: crypto.randomUUID(),
+//         oauth_signature_method: 'HMAC-SHA1',
+//         oauth_timestamp: Math.floor(Date.now() / 1000).toString(),
+//         oauth_version: '1.0',
+//     }
+
+//     const baseString = getOAuthBaseString(oauth, url, method)
+//     const signingKey = `${encodeURIComponent(env.TWITTER_API_SECRET)}&${encodeURIComponent(env.TWITTER_ACCESS_SECRET)}`
+
+//     // HMAC-SHA1 using Web Crypto API
+//     const keyBuffer = new TextEncoder().encode(signingKey)
+//     const baseBuffer = new TextEncoder().encode(baseString)
+
+//     const cryptoKey = await crypto.subtle.importKey(
+//         'raw',
+//         keyBuffer,
+//         { name: 'HMAC', hash: 'SHA-1' },
+//         false,
+//         ['sign']
+//     )
+
+//     const signatureArrayBuffer = await crypto.subtle.sign('HMAC', cryptoKey, baseBuffer)
+//     const signatureBytes = new Uint8Array(signatureArrayBuffer)
+//     const signature = btoa(String.fromCharCode(...signatureBytes))
+
+//     oauth['oauth_signature'] = signature
+
+//     return (
+//         'OAuth ' +
+//         Object.entries(oauth)
+//             .map(([k, v]) => `${k}="${encodeURIComponent(v)}"`)
+//             .join(', ')
+//     )
+// }
+
+// async function signedPost(env: any, url: string, body: any) {
+//     console.log("env.USER_AGENT: ", env.USER_AGENT);
+//     const headers = {
+//         Authorization: await getOAuthHeader(env, url),
+//         'Content-Type': 'application/json',
+//         'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36"
+//     }
+//     const resp = await fetch(url, {
+//         method: 'POST',
+//         headers,
+//         body: JSON.stringify(body),
+//     });
+//     console.log("TWITTER RESP: ");
+//     console.log(resp);
+//     return resp;
+// }
+
+// app.get('/healthcheck', (c) => {
+//     console.log("Req came at healthcheck: ", c.env.TWITTER_ACCESS_SECRET);
+//     return c.json({ success: true, user_id: c.env.USER_ID })
+// })
+
+// app.post('/autotweet/tweet', async (c) => {
+//     const { text, image_url } = await c.req.json()
+//     const env = c.env
+//     let media_id = null
+
+//     if (image_url) {
+//         try {
+//             const imageRes = await fetch(image_url)
+//             const imageBuffer = await imageRes.arrayBuffer()
+//             const form = new FormData()
+//             const blob = new Blob([imageBuffer], { type: 'image/jpeg' })
+//             form.set('media', new File([blob], 'image.jpg'))
+
+//             const headers = {
+//                 Authorization: await getOAuthHeader(env, 'https://upload.twitter.com/1.1/media/upload.json'),
+//             }
+
+//             const uploadRes = await fetch('https://upload.twitter.com/1.1/media/upload.json', {
+//                 method: 'POST',
+//                 headers,
+//                 body: form as any,
+//             })
+
+//             const uploadJson = await uploadRes.json()
+//             media_id = uploadJson.media_id_string
+//         } catch (err) {
+//             console.log('Image upload error:', err)
+//         }
+//     }
+
+//     const tweetBody = media_id ? { text, media: { media_ids: [media_id] } } : { text }
+
+//     try {
+//         const tweetRes = await signedPost(env, TWITTER_BASE_URL + '/tweets', tweetBody)
+//         const tweetJson = await tweetRes.json()
+//         console.log(tweetJson);
+//         return c.json({ success: true, id: tweetJson.data.id })
+//     } catch (err: any) {
+//         console.log("Errro at /tweet due to: " + err);
+//         return c.json({ success: false, message: err.message }, 500)
+//     }
+// })
+
+// app.post('/autotweet/retweet', async (c) => {
+//     const { tweet_id } = await c.req.json()
+//     const env = c.env
+//     try {
+//         const res = await signedPost(env, `${TWITTER_BASE_URL}/users/${env.USER_ID}/retweets`, { tweet_id })
+//         if (!res.ok) throw new Error(await res.text())
+//         return c.json({ success: true, message: 'Retweet done success' })
+//     } catch (err: any) {
+//         console.log("Errro at /retweet due to: " + err);
+//         return c.json({ success: false, message: err.message }, 500)
+//     }
+// })
+
+// app.post('/autotweet/like', async (c) => {
+//     const { tweet_id } = await c.req.json()
+//     const env = c.env
+//     try {
+//         const res = await signedPost(env, `${TWITTER_BASE_URL}/users/${env.USER_ID}/likes`, { tweet_id })
+//         if (!res.ok) throw new Error(await res.text())
+//         return c.json({ success: true, message: 'Like done success' })
+//     } catch (err: any) {
+//         console.log("Errro at /like due to: " + err);
+//         return c.json({ success: false, message: err.message }, 500)
+//     }
+// })
+
+// app.post('/autotweet/comment', async (c) => {
+//     const { tweet_id, text } = await c.req.json()
+//     const env = c.env
+//     try {
+//         const res = await signedPost(env, `${TWITTER_BASE_URL}/tweets`, {
+//             text,
+//             reply: { in_reply_to_tweet_id: tweet_id },
+//         })
+//         const data = await res.json()
+//         console.log(data);
+//         return c.json({ success: true, id: data.data.id, message: 'Reply done success' })
+//     } catch (err: any) {
+//         console.log("Errro at /comment due to: " + err);
+//         return c.json({ success: false, message: err.message }, 500)
+//     }
+// })
+
+// app.post('/autotweet/quote', async (c) => {
+//     const { tweet_id, text } = await c.req.json()
+//     const env = c.env
+//     try {
+//         const res = await signedPost(env, `${TWITTER_BASE_URL}/tweets`, {
+//             text,
+//             quote_tweet_id: tweet_id,
+//         })
+//         const data = await res.json()
+//         return c.json({ success: true, id: data.data.id, message: 'Quote done success' })
+//     } catch (err: any) {
+//         console.log("Errro at /quote due to: " + err);
+//         return c.json({ success: false, message: err.message }, 500)
+//     }
+// })
+
+// export default app
+
+
 // index.ts
 import { Hono } from 'hono'
-import { FormData, File } from 'formdata-node'
-import { fileFromPath } from 'formdata-node/file-from-path'
 
 const app = new Hono()
 
-const TWITTER_BASE_URL = 'https://api.twitter.com/2'
-
-function getOAuthBaseString(oauth: Record<string, string>, url: string, method: string): string {
-    const paramString = Object.keys(oauth)
-        .sort()
-        .map((key) => `${encodeURIComponent(key)}=${encodeURIComponent(oauth[key])}`)
-        .join('&')
-
-    return `${method}&${encodeURIComponent(url)}&${encodeURIComponent(paramString)}`
-}
-
-async function getOAuthHeader(env: any, url: string, method = 'POST') {
-    const oauth: Record<string, string> = {
-        oauth_consumer_key: env.TWITTER_API_KEY,
-        oauth_token: env.TWITTER_ACCESS_TOKEN,
-        oauth_nonce: crypto.randomUUID(),
-        oauth_signature_method: 'HMAC-SHA1',
-        oauth_timestamp: Math.floor(Date.now() / 1000).toString(),
-        oauth_version: '1.0',
-    }
-
-    const baseString = getOAuthBaseString(oauth, url, method)
-    const signingKey = `${encodeURIComponent(env.TWITTER_API_SECRET)}&${encodeURIComponent(env.TWITTER_ACCESS_SECRET)}`
-
-    // HMAC-SHA1 using Web Crypto API
-    const keyBuffer = new TextEncoder().encode(signingKey)
-    const baseBuffer = new TextEncoder().encode(baseString)
-
-    const cryptoKey = await crypto.subtle.importKey(
-        'raw',
-        keyBuffer,
-        { name: 'HMAC', hash: 'SHA-1' },
-        false,
-        ['sign']
-    )
-
-    const signatureArrayBuffer = await crypto.subtle.sign('HMAC', cryptoKey, baseBuffer)
-    const signatureBytes = new Uint8Array(signatureArrayBuffer)
-    const signature = btoa(String.fromCharCode(...signatureBytes))
-
-    oauth['oauth_signature'] = signature
-
-    return (
-        'OAuth ' +
-        Object.entries(oauth)
-            .map(([k, v]) => `${k}="${encodeURIComponent(v)}"`)
-            .join(', ')
-    )
-}
-
-async function signedPost(env: any, url: string, body: any) {
-    console.log("env.USER_AGENT: ", env.USER_AGENT);
-    const headers = {
-        Authorization: await getOAuthHeader(env, url),
-        'Content-Type': 'application/json',
-        'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36"
-    }
-    const resp = await fetch(url, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(body),
-    });
-    console.log("TWITTER RESP: ");
-    console.log(resp);
-    return resp;
-}
+const getEnvPayload = (env: any) => ({
+    TWITTER_API_KEY: env.TWITTER_API_KEY,
+    TWITTER_API_SECRET: env.TWITTER_API_SECRET,
+    TWITTER_ACCESS_TOKEN: env.TWITTER_ACCESS_TOKEN,
+    TWITTER_ACCESS_SECRET: env.TWITTER_ACCESS_SECRET,
+    USER_ID: env.USER_ID,
+    USER_AGENT: env.USER_AGENT,
+    APP_NAME: env.APP_NAME
+})
 
 app.get('/healthcheck', (c) => {
-    console.log("Req came at healthcheck: ", c.env.TWITTER_ACCESS_SECRET);
-    return c.json({ success: true, user_id: c.env.USER_ID })
+    return c.json({ success: true, message: "Server is working fine" })
 })
 
 app.post('/autotweet/tweet', async (c) => {
-    const { text, image_url } = await c.req.json()
-    const env = c.env
-    let media_id = null
-
-    if (image_url) {
-        try {
-            const imageRes = await fetch(image_url)
-            const imageBuffer = await imageRes.arrayBuffer()
-            const form = new FormData()
-            const blob = new Blob([imageBuffer], { type: 'image/jpeg' })
-            form.set('media', new File([blob], 'image.jpg'))
-
-            const headers = {
-                Authorization: await getOAuthHeader(env, 'https://upload.twitter.com/1.1/media/upload.json'),
-            }
-
-            const uploadRes = await fetch('https://upload.twitter.com/1.1/media/upload.json', {
-                method: 'POST',
-                headers,
-                body: form as any,
-            })
-
-            const uploadJson = await uploadRes.json()
-            media_id = uploadJson.media_id_string
-        } catch (err) {
-            console.log('Image upload error:', err)
-        }
+    const body = await c.req.json()
+    const payload = {
+        ...body, // { text, image_url }
+        ...getEnvPayload(c.env),
     }
+    const backend_url = (c.env as any).BACKEND_BASE_URL;
 
-    const tweetBody = media_id ? { text, media: { media_ids: [media_id] } } : { text }
-
-    try {
-        const tweetRes = await signedPost(env, TWITTER_BASE_URL + '/tweets', tweetBody)
-        const tweetJson = await tweetRes.json()
-        console.log(tweetJson);
-        return c.json({ success: true, id: tweetJson.data.id })
-    } catch (err: any) {
-        console.log("Errro at /tweet due to: " + err);
-        return c.json({ success: false, message: err.message }, 500)
-    }
+    const resp = await fetch(`${backend_url}/tweet`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+    })
+    const data = await resp.json()
+    return c.json(data)
 })
 
 app.post('/autotweet/retweet', async (c) => {
-    const { tweet_id } = await c.req.json()
-    const env = c.env
-    try {
-        const res = await signedPost(env, `${TWITTER_BASE_URL}/users/${env.USER_ID}/retweets`, { tweet_id })
-        if (!res.ok) throw new Error(await res.text())
-        return c.json({ success: true, message: 'Retweet done success' })
-    } catch (err: any) {
-        console.log("Errro at /retweet due to: " + err);
-        return c.json({ success: false, message: err.message }, 500)
+    const body = await c.req.json()
+    const payload = {
+        ...body, // { tweet_id }
+        ...getEnvPayload(c.env),
     }
+
+    const backend_url = (c.env as any).BACKEND_BASE_URL;
+
+    const resp = await fetch(`${backend_url}/retweet`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+    })
+    const data = await resp.json()
+    return c.json(data)
 })
 
 app.post('/autotweet/like', async (c) => {
-    const { tweet_id } = await c.req.json()
-    const env = c.env
-    try {
-        const res = await signedPost(env, `${TWITTER_BASE_URL}/users/${env.USER_ID}/likes`, { tweet_id })
-        if (!res.ok) throw new Error(await res.text())
-        return c.json({ success: true, message: 'Like done success' })
-    } catch (err: any) {
-        console.log("Errro at /like due to: " + err);
-        return c.json({ success: false, message: err.message }, 500)
+    const body = await c.req.json()
+    const payload = {
+        ...body, // { tweet_id }
+        ...getEnvPayload(c.env),
     }
+
+    const backend_url = (c.env as any).BACKEND_BASE_URL;
+
+    const resp = await fetch(`${backend_url}/like`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+    })
+    const data = await resp.json()
+    return c.json(data)
 })
 
 app.post('/autotweet/comment', async (c) => {
-    const { tweet_id, text } = await c.req.json()
-    const env = c.env
-    try {
-        const res = await signedPost(env, `${TWITTER_BASE_URL}/tweets`, {
-            text,
-            reply: { in_reply_to_tweet_id: tweet_id },
-        })
-        const data = await res.json()
-        console.log(data);
-        return c.json({ success: true, id: data.data.id, message: 'Reply done success' })
-    } catch (err: any) {
-        console.log("Errro at /comment due to: " + err);
-        return c.json({ success: false, message: err.message }, 500)
+    const body = await c.req.json()
+    const payload = {
+        ...body, // { tweet_id, text }
+        ...getEnvPayload(c.env),
     }
+
+    const backend_url = (c.env as any).BACKEND_BASE_URL;
+
+    const resp = await fetch(`${backend_url}/comment`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+    })
+    const data = await resp.json()
+    return c.json(data)
 })
 
 app.post('/autotweet/quote', async (c) => {
-    const { tweet_id, text } = await c.req.json()
-    const env = c.env
-    try {
-        const res = await signedPost(env, `${TWITTER_BASE_URL}/tweets`, {
-            text,
-            quote_tweet_id: tweet_id,
-        })
-        const data = await res.json()
-        return c.json({ success: true, id: data.data.id, message: 'Quote done success' })
-    } catch (err: any) {
-        console.log("Errro at /quote due to: " + err);
-        return c.json({ success: false, message: err.message }, 500)
+    const body = await c.req.json()
+    const payload = {
+        ...body, // { tweet_id, text }
+        ...getEnvPayload(c.env),
     }
+
+    const backend_url = (c.env as any).BACKEND_BASE_URL;
+
+    const resp = await fetch(`${backend_url}/quote`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+    })
+    const data = await resp.json()
+    return c.json(data)
 })
 
 export default app
